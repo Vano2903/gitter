@@ -20,6 +20,7 @@ func main() {
 	r.HandleFunc(GitRepoRecivePack, GitHandlerFunction)
 	r.HandleFunc(GitRepoRecivePack, GitHandlerFunction)
 	r.HandleFunc(GitRepo, GitHandlerFunction)
+	r.HandleFunc(GitRepo2, GitHandlerFunction)
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))
 	log.Println("partito")
