@@ -14,7 +14,7 @@ func main() {
 	var u User
 	u.Username = "test"
 	u.Password = "test"
-	u.Register()
+	u.NewRepo("test")
 	// r := gin.Default()
 	// v1 := r.Group("/v1")
 	// {

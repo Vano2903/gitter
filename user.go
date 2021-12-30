@@ -22,3 +22,16 @@ func (u User) Register() error {
 	fmt.Print(string(stdout))
 	return nil
 }
+
+func (u User) NewRepo(repoName string) error{
+	cmd := exec.Command(conf.Scripts+"/newRepo.sh", u.Username, u.Password, repoName)
+
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(string(stdout))
+	return nil
+}
