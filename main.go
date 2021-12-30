@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +16,8 @@ func main() {
 	var u User
 	u.Username = "test"
 	u.Password = "test"
-	u.NewRepo("test")
+	fmt.Println(u.Register())
+	fmt.Println(u.NewRepo("test"))
 	// r := gin.Default()
 	// v1 := r.Group("/v1")
 	// {

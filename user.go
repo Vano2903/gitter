@@ -11,8 +11,9 @@ type User struct {
 }
 
 func (u User) Register() error {
-	cmd := exec.Command(conf.Scripts+"/newUser.sh", u.Username, u.Password)
-
+	cmd := exec.Command(conf.Scripts+"newUser.sh", u.Username, u.Password)
+	//cmd.Dir = conf.Scripts
+	fmt.Println(cmd.Path)
 	stdout, err := cmd.Output()
 
 	if err != nil {
@@ -24,8 +25,8 @@ func (u User) Register() error {
 }
 
 func (u User) NewRepo(repoName string) error{
-	cmd := exec.Command(conf.Scripts+"/newRepo.sh", u.Username, u.Password, repoName)
-
+	cmd := exec.Command(conf.Scripts+"newRepo.sh", u.Username, u.Password, repoName)
+	//cmd.Dir = conf.Scripts
 	stdout, err := cmd.Output()
 
 	if err != nil {
