@@ -2,12 +2,12 @@ package main
 
 const (
 	//user endpoints
-	newUser    string = "/api/newUser/:user"
-	deleteUser string = "/api/deleteUser/:user"
+	NewUser    string = "/api/newUser/:user"
+	DeleteUser string = "/api/deleteUser/:user"
 
 	//repo endpoints
-	getRepos   string = "/api/:user/repos"
-	getRepo    string = "/api/:user/:repo"
-	addRepo    string = "api/:user/add/:repo"
-	deleteRepo string = "api/:user/delete/:repo"
+	GetRepos   string = "/api/:user/repos"
+	GetRepo    string = "/api/:user/:repo"
+	AddRepo    string = "/api/:user/add/:repo"
+	DeleteRepo string = "/api/:user/delete/:repo"
 )

@@ -12,7 +12,7 @@ then
     exit 1
 else
     #create the user
-    htpasswd -cb "/var/www/html/git/htpasswd" $1 $2
+    htpasswd -cbB "/var/www/html/git/htpasswd" $1 $2
     #create the repo
     mkdir $USERREPO
     #set the permissions of the folder (nginx)
