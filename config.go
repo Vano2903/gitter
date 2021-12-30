@@ -11,7 +11,7 @@ import (
 type config struct {
 	Scripts string `yaml:"scriptFolder"`
 	Repos   string `yaml:"reposFolder"`
-	Port string `yaml:"port"`
+	Port    string `yaml:"port"`
 }
 
 var (
@@ -23,7 +23,10 @@ func init() {
 	// ScriptFolder := os.Getenv("scriptFolder")
 	// ScriptFolder := os.Getenv("scriptFolder")
 	// if ScriptFolder == "" {
-	dat, err := ioutil.ReadFile("config.yaml")
+	dat, err := ioutil.ReadFile("configs/config.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = yaml.Unmarshal([]byte(dat), &conf)
 	if err != nil {
 		log.Fatalf("error: %v", err)
