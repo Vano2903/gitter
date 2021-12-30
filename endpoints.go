@@ -3,7 +3,7 @@ package main
 const (
 	//git endpoints
 	GitRepoRecivePack string = "/git/api/{user}/{repo}/git-receive-pack"
-	GitRepoInfo string = "/git/api/{user}/{repo}/info/refs"
+	GitRepoInfo       string = "/git/api/{user}/{repo}/info/refs"
 
 	//user endpoints
 	NewUser    string = "/git/api/newUser/{user}"
@@ -14,4 +14,5 @@ const (
 	GetRepo    string = "/git/api/{user}/{repo}/get"
 	AddRepo    string = "/git/api/{user}/add/{repo}"
 	DeleteRepo string = "/git/api/{user}/delete/{repo}"
+	//to commit
 )
