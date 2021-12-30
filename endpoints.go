@@ -2,7 +2,8 @@ package main
 
 const (
 	//git endpoints
-	GitRepo string = "/git/api/{user}/{repo}/"
+	GitRepoRecivePack string = "/git/api/{user}/{repo}/git-receive-pack"
+	GitRepoInfo string = "/git/api/{user}/{repo}/info/refs"
 
 	//user endpoints
 	NewUser    string = "/git/api/newUser/{user}"

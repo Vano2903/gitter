@@ -10,7 +10,8 @@ import (
 
 func main() {
 	r := mux.NewRouter()
-	r.Handle(GitRepo, GitHandler)
+	r.Handle(GitRepoRecivePack, GitHandler)
+	r.Handle(GitRepoInfo, GitHandler)
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))
 	log.Println("partito")
