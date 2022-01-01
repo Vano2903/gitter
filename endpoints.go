@@ -15,4 +15,5 @@ const (
 	GetRepo    string = "/git/api/{user}/{repo}/get"
 	AddRepo    string = "/git/api/{user}/add/{repo}"
 	DeleteRepo string = "/git/api/{user}/delete/{repo}"
+	//to commit
 )
