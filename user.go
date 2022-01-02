@@ -105,7 +105,7 @@ func CheckUserCreationInfo(user, email, pass string) error {
 	if user == "" || pass == "" || email == "" {
 		return errors.New("uncorrect/uncomplete credentials to create the user")
 	}
-	if len(user) <= 4 || len(user) >= 20 {
+	if len(user) < 4 || len(user) > 20 {
 		return errors.New("username must be longer than 4 characters")
 	}
 	if strings.Contains(user, "/") {
