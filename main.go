@@ -111,7 +111,7 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	</head>
 	<div>
 		<h1>Hi, we are almost done, confirm your registration by clicking the button below</h1>`
-	emailBody += fmt.Sprintf(`<a href='192.168.1.9:8080/git/api/confirm?token=%s' 
+	emailBody += fmt.Sprintf(`<a href='http://192.168.1.9:8080/git/api/confirm?token=%s' 
 	id='submit'>Confirm your registration</a></div>`, jwt)
 	fmt.Println(jwt)
 	err = email.SendEmail(conf.Email, conf.EmailPassword, post.Email, "Confirm your registration to gitter", emailBody)
@@ -123,15 +123,15 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(statusCode) //201
 	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "added correctly, check your email to confirm your registration")))
-	fmt.Println()
+	// fmt.Println()
 }
 
 func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	token := r.URL.Query().Get("token")
-	fmt.Println(token)
+	// fmt.Println(token)
 	username, email, err := ParseJWT(token)
-	fmt.Println(username, email, err)
+	// fmt.Println(username, email, err)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest) //400
 		w.Write([]byte(`{"code": 400, "msg": "Error parsing token"}`))
@@ -152,7 +152,7 @@ func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(DeleteUser(user.User, user.Pass, false))
+	DeleteUser(user.User, user.Pass, false)
 	statusCode, err := AddUser(username, email, user.Pass, user.Salt, true)
 	if err != nil {
 		w.WriteHeader(statusCode) //400 | 406
