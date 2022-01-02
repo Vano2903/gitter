@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Vano2903/gitter/internal/email"
 	"github.com/gorilla/mux"
 )
 
@@ -33,7 +34,7 @@ func GitHandlerPackage(w http.ResponseWriter, r *http.Request, pkg string) {
 }
 
 //add a user to the database and create the user's repo
-func AddUserHandler(w http.ResponseWriter, r *http.Request) {
+func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	var post Post
 	w.Header().Set("Content-Type", "application/json")
 
@@ -43,14 +44,119 @@ func AddUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := AddUser(post.Username, post.Email, post.Password)
+	statusCode, err := AddUser(post.Username, post.Email, post.Password, "", false)
 	if err != nil {
 		w.WriteHeader(statusCode) //400 | 406
 		w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, err.Error())))
 		return
 	}
+
+	jwt, err := GenerateJWT(post.Username, post.Email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error generating JWT: ` + err.Error() + `"}`))
+		return
+	}
+
+	emailBody := `
+	<head>
+	<style>
+		div {
+			background-color: #1e1e1e;
+			display: grid;
+			padding: 0 1rem 1rem 1rem;
+			justify-content: center;
+			align-items: center;
+			border-radius: .2rem;
+		}
+		#submit, #submit:visited, #submit:active {
+			margin: 1rem auto;
+			cursor: pointer;
+			font-family: inherit;
+			font-size: 1rem;
+			border-radius: .2rem;
+			padding: 1rem 3rem;
+			transition: .2s;
+			outline: none;
+			height: fit-content;
+			background-color: #ffcc80;
+			border: none;
+			color: #000000;
+			text-decoration: none;
+		}
+	
+		#submit:hover {
+			background-color: #ca9b52;
+		}
+	
+		h1 {
+			margin: 0 auto;
+			color: #ffffff;
+		}
+		p {
+			margin-top: 2rem;
+			width: 100%;
+			color: white;
+		}
+		#delete, #delete:hover, #delete:visited, #delete:active {
+			color: #9c64a6;
+			text-decoration: none;
+		}
+		h2 {
+			width: 100%;
+			color: #ffffff;
+			margin: 0 0 1rem 0;
+		}
+	</style>
+	</head>
+	<div>
+		<h1>Hi, we are almost done, confirm your registration by clicking the button below</h1>`
+	emailBody += fmt.Sprintf(`
+		<a href='https://192.168.1.9/git/api/confirm?token=%s' id='submit'>Confirm your registration</a>
+	</div>`, jwt)
+
+	err = email.SendEmail(conf.Email, conf.EmailPassword, post.Email, "Confirm your registration to gitter", emailBody)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, http.StatusInternalServerError, "error sending the email: "+err.Error())))
+	}
+
 	w.WriteHeader(statusCode) //201
-	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "user added successfully")))
+	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "added correctly, check your email to confirm your registration")))
+}
+
+func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	token := r.URL.Query().Get("token")
+
+	username, email, err := ParseJWT(token)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error parsing token"}`))
+		return
+	}
+
+	user, err := QueryByEmail(email)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound) //400
+		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+	if user.User != username {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "User doesnt match, maybe the jwt is invalid, try to register again"}`))
+		return
+	}
+
+	statusCode, err := AddUser(username, email, user.Pass, user.Salt, true)
+	if err != nil {
+		w.WriteHeader(statusCode) //400 | 406
+		w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, err.Error())))
+		return
+	}
+
+	w.WriteHeader(statusCode) //200
+	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "confirmed correctly, you can now login")))
 }
 
 func main() {
@@ -66,7 +172,8 @@ func main() {
 	})
 
 	//handle user operations
-	r.HandleFunc(Register, AddUserHandler).Methods("POST")
+	r.HandleFunc(Register, AddUserUnconfirmHandler).Methods("POST")
+	r.HandleFunc(ConfirmRegistration, ConfirmRegistrationHandler).Methods("GET")
 
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))

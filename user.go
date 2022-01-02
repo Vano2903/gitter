@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Vano2903/gitter/internal/email"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,9 +18,10 @@ import (
 )
 
 var (
-	clientUser     *mongo.Client
-	ctxUser        context.Context
-	collectionUser *mongo.Collection
+	clientUser                *mongo.Client
+	ctxUser                   context.Context
+	collectionUser            *mongo.Collection
+	collectionUserUnconfirmed *mongo.Collection
 )
 
 type User struct {
@@ -54,6 +56,7 @@ func ConnectToDatabaseUsers() error {
 
 	//assign to the global variable "collection" the users' collection
 	collectionUser = clientUser.Database("gitter").Collection("users")
+	collectionUserUnconfirmed = clientUser.Database("gitter").Collection("users-unconfirmed")
 	return nil
 }
 
@@ -100,13 +103,38 @@ func QueryUser(user, pass string) (User, error) {
 	return userFound[0], nil
 }
 
+func QueryByEmail(email string) (User, error) {
+	//create a query using email and password
+	query := bson.M{"email": email}
+	//check the db for the credentials using the query
+	cur, err := collectionUser.Find(ctxUser, query)
+	if err != nil {
+		return User{}, err
+	}
+	defer cur.Close(ctxUser)
+	var userFound []User
+
+	//convert cur in []User
+	if err = cur.All(context.TODO(), &userFound); err != nil {
+		return User{}, err
+	}
+	if len(userFound) == 0 {
+		return User{}, errors.New("no user found as " + email)
+	}
+	//return the first user found (since using email and password will only return a slice of 1)
+	return userFound[0], nil
+}
+
 //check that the username, email and password are not empty
+//check if the email is valid
 //check if the username has invalid characters (since it will be used as the name of the user's repo)
 //the length of the username must be between 4 and 20
-func CheckUserCreationInfo(user, email, pass string) error {
-	//check if strings are empty and authlvl between 0 and 2
-	if user == "" || pass == "" || email == "" {
+func CheckUserCreationInfo(user, emailUser, pass string) error {
+	if user == "" || pass == "" || emailUser == "" {
 		return errors.New("uncorrect/uncomplete credentials to create the user")
+	}
+	if !email.IsValid(emailUser) {
+		return errors.New("email is not valid")
 	}
 	if len(user) < 4 || len(user) > 20 {
 		return errors.New("username must be longer than 4 characters")
@@ -124,7 +152,7 @@ func CheckUserCreationInfo(user, email, pass string) error {
 }
 
 //will add the user to database, return the id if succeded adding the user
-func AddUser(user, email, pass string) (int, error) {
+func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 	if err := CheckUserCreationInfo(user, email, pass); err != nil {
 		return 406, fmt.Errorf("error with the credentials given: %s", err.Error())
 	}
@@ -135,16 +163,17 @@ func AddUser(user, email, pass string) (int, error) {
 		return 400, fmt.Errorf("User already exist: %s", err.Error())
 	}
 
-	//generating a new randomizer
-	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-	//generating the user salt (random string of length 16)
-	var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]byte, 16)
-	for i := range b {
-		b[i] = letters[seededRand.Intn(len(letters))]
+	if salt != "" {
+		//generating a new randomizer
+		var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+		//generating the user salt (random string of length 16)
+		var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+		b := make([]byte, 16)
+		for i := range b {
+			b[i] = letters[seededRand.Intn(len(letters))]
+		}
+		salt = string(b)
 	}
-	salt := string(b)
-
 	//adding a default profile picture
 	pfpUrl := "https://avatars.dicebear.com/api/identicon/" + user + ".svg"
 	//adding user to database
@@ -163,9 +192,16 @@ func AddUser(user, email, pass string) (int, error) {
 		pfpUrl,
 	}
 
-	//add the user to the database
-	if _, err := collectionUser.InsertOne(ctxUser, toInsert); err != nil {
-		return 500, fmt.Errorf("error adding the user to the database: %s", err.Error())
+	if confirmed {
+		//add the user to the database
+		if _, err := collectionUser.InsertOne(ctxUser, toInsert); err != nil {
+			return 500, fmt.Errorf("error adding the user to the database: %s", err.Error())
+		}
+	} else {
+		//add the user to the database
+		if _, err := collectionUserUnconfirmed.InsertOne(ctxUser, toInsert); err != nil {
+			return 500, fmt.Errorf("error adding the user to the database: %s", err.Error())
+		}
 	}
 
 	//create the repository for the user (no need to run git init)
@@ -174,4 +210,14 @@ func AddUser(user, email, pass string) (int, error) {
 	}
 
 	return 201, nil
+}
+
+//delete a user from the database
+func DeleteUser(user, pass string, isConfirmed bool) error {
+	if isConfirmed {
+		_, err := collectionUser.DeleteOne(ctxUser, bson.M{"user": user, "password": pass})
+		return err
+	}
+	_, err := collectionUserUnconfirmed.DeleteOne(ctxUser, bson.M{"user": user, "password": pass})
+	return err
 }

@@ -9,11 +9,13 @@ import (
 )
 
 type config struct {
-	Scripts   string `yaml:"scriptFolder"`
-	Repos     string `yaml:"reposFolder"`
-	Port      string `yaml:"port"`
-	Uri       string `yaml:"uri"`
-	JwtSecret string `yaml:"jwtSecret"`
+	Scripts       string `yaml:"scriptFolder"`
+	Repos         string `yaml:"reposFolder"`
+	Port          string `yaml:"port"`
+	Uri           string `yaml:"uri"`
+	JwtSecret     string `yaml:"jwtSecret"`
+	Email         string `yaml:"email"`
+	EmailPassword string `yaml:"email-password"`
 }
 
 var (

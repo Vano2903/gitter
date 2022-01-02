@@ -7,9 +7,10 @@ const (
 	GitRepoInfo       string = "/git/api/{user}/{repo}/info/refs"
 
 	//user endpoints
-	Register   string = "/git/api/singup/"
-	Login      string = "/git/api/login/"
-	DeleteUser string = "/git/api/singoff/"
+	Register            string = "/git/api/singup"
+	ConfirmRegistration string = "/git/api/confirm?"
+	Login               string = "/git/api/login"
+	Singoff             string = "/git/api/singoff"
 
 	//repo endpoints
 	GetRepos   string = "/git/api/{user}/repos"
