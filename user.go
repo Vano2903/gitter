@@ -211,10 +211,12 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 	}
 
 	//create the repository for the user (no need to run git init)
-	if err := CreateNewDir(conf.Repos+user, false); err != nil {
-		return 500, fmt.Errorf("error creating the repo: %s", err.Error())
+	if !confirmed {
+		if err := CreateNewDir(conf.Repos+user, false); err != nil {
+			return 500, fmt.Errorf("error creating the repo: %s", err.Error())
+		}
 	}
-
+	
 	return 201, nil
 }
 
