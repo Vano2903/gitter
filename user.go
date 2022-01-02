@@ -152,7 +152,7 @@ func AddUser(user, email, pass string) (int, error) {
 	toInsert := struct {
 		User   string `bson:"user, omitempty"      json: "user, omitempty"`
 		Email  string `bson:"email, omitempty"  json:"email, omitempty"`
-		Salt   string `bson:"password, omitempty"  json: "-"`
+		Salt   string `bson:"salt, omitempty"  json: "-"`
 		Pass   string `bson:"password, omitempty"  json: "password, omitempty"`
 		PfpUrl string `bson:"pfp_url, omitempty" json:"pfp_url, omitempty"`
 	}{
