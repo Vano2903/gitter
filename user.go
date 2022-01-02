@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
+	"fmt"
+	"math/rand"
 	"reflect"
 	"strings"
 	"time"
@@ -24,7 +27,8 @@ type User struct {
 	User   string             `bson:"user, omitempty" json:"user, omitempty"`          //username
 	Email  string             `bson:"email, omitempty"  json:"email, omitempty"`       //email
 	Pass   string             `bson:"password, omitempty"  json:"password, omitempty"` //password
-	PfpUrl string             `bson:"pfp_url, omitempty" json:"pfp_url, omitempty"`    //url of the profile picture
+	Salt   string             `bson:"salt, omitempty"  json:"-"`
+	PfpUrl string             `bson:"pfp_url, omitempty" json:"pfp_url, omitempty"` //url of the profile picture
 }
 
 //check if the structure has empty fields
@@ -117,17 +121,26 @@ func CheckUserCreationInfo(user, email, pass string) error {
 }
 
 //will add the user to database, return the id if succeded adding the user
-//type 0 = success, 1 = 4xx response, 2 = 5xx response
 func AddUser(user, email, pass string) (int, error) {
 	if err := CheckUserCreationInfo(user, email, pass); err != nil {
-		return 1, err
+		return 406, fmt.Errorf("error with the credentials given: %s", err.Error())
 	}
 
 	//check if not already registered
 	//if nil is returned means that a user was found
 	if _, err := QueryUser(user, pass); err == nil {
-		return 1, errors.New("user already exist")
+		return 400, fmt.Errorf("User already exist: %s", err.Error())
 	}
+
+	//generating a new randomizer
+	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	//generating the user salt (random string of length 16)
+	var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	b := make([]byte, 16)
+	for i := range b {
+		b[i] = letters[seededRand.Intn(len(letters))]
+	}
+	salt := string(b)
 
 	//adding a default profile picture
 	pfpUrl := "https://avatars.dicebear.com/api/identicon/" + user + ".svg"
@@ -136,24 +149,26 @@ func AddUser(user, email, pass string) (int, error) {
 	toInsert := struct {
 		User   string `bson:"user, omitempty"      json: "user, omitempty"`
 		Email  string `bson:"email, omitempty"  json:"email, omitempty"`
+		Salt   string `bson:"password, omitempty"  json: "-"`
 		Pass   string `bson:"password, omitempty"  json: "password, omitempty"`
 		PfpUrl string `bson:"pfp_url, omitempty" json:"pfp_url, omitempty"`
 	}{
 		user,
 		email,
-		pass,
+		salt,
+		fmt.Sprintf("%x", sha256.Sum256([]byte(pass+":"+salt))),
 		pfpUrl,
 	}
 
 	//add the user to the database
 	if _, err := collectionUser.InsertOne(ctxUser, toInsert); err != nil {
-		return 2, err
+		return 500, fmt.Errorf("error adding the user to the database: %s", err.Error())
 	}
 
 	//create the repository for the user (no need to run git init)
 	if err := CreateNewDir(conf.Repos+user, false); err != nil {
-		return 2, err
+		return 500, fmt.Errorf("error creating the repo: %s", err.Error())
 	}
 
-	return 0, nil
+	return 201, nil
 }
