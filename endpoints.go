@@ -8,7 +8,7 @@ const (
 
 	//user endpoints
 	Register            string = "/git/api/singup"
-	ConfirmRegistration string = "/git/api/confirm?"
+	ConfirmRegistration string = "/git/api/confirm"
 	Login               string = "/git/api/login"
 	Singoff             string = "/git/api/singoff"
 
