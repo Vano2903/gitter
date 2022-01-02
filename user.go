@@ -81,11 +81,17 @@ func GetProfilePicture(username string) (string, error) {
 }
 
 //return the user based on username and password
-func QueryUser(user, pass string) (User, error) {
+func QueryUser(user, pass string, onUnconfirmed bool) (User, error) {
 	//create a query using email and password
 	query := bson.M{"user": user, "password": pass}
 	//check the db for the credentials using the query
-	cur, err := collectionUser.Find(ctxUser, query)
+	var cur *mongo.Cursor
+	var err error
+	if onUnconfirmed {
+		cur, err = collectionUserUnconfirmed.Find(ctxUser, query)
+	} else {
+		cur, err = collectionUser.Find(ctxUser, query)
+	}
 	if err != nil {
 		return User{}, err
 	}
@@ -165,10 +171,15 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 
 	//check if not already registered
 	//if nil is returned means that a user was found
-	if _, err := QueryUser(user, pass); err == nil {
+	if _, err := QueryUser(user, pass, false); err == nil {
 		return 400, fmt.Errorf("User already exist: %s", err.Error())
 	}
 
+	if _, err := QueryUser(user, pass, true); err == nil {
+		return 400, fmt.Errorf("User already exist: %s", err.Error())
+	}
+
+	//if salt is null it means that the user is confirmating the account so the salt has already been generated
 	if salt == "" {
 		//generating a new randomizer
 		var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -211,12 +222,12 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 	}
 
 	//create the repository for the user (no need to run git init)
-	if !confirmed {
+	if confirmed {
 		if err := CreateNewDir(conf.Repos+user, false); err != nil {
 			return 500, fmt.Errorf("error creating the repo: %s", err.Error())
 		}
 	}
-	
+
 	return 201, nil
 }
 
