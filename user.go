@@ -95,6 +95,7 @@ func QueryUser(user, pass string) (User, error) {
 	}
 	if len(userFound) == 0 {
 		return User{}, errors.New("no user found as " + user)
+	}
 	//return the first user found (since using email and password will only return a slice of 1)
 	return userFound[0], nil
 }
