@@ -113,7 +113,7 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 		<h1>Hi, we are almost done, confirm your registration by clicking the button below</h1>`
 	emailBody += fmt.Sprintf(`<a href='192.168.1.9:8080/git/api/confirm?token=%s' 
 	id='submit'>Confirm your registration</a></div>`, jwt)
-
+	fmt.Println(jwt)
 	err = email.SendEmail(conf.Email, conf.EmailPassword, post.Email, "Confirm your registration to gitter", emailBody)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError) //500
@@ -123,13 +123,15 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(statusCode) //201
 	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "added correctly, check your email to confirm your registration")))
+	fmt.Println()
 }
 
 func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	token := r.URL.Query().Get("token")
-
+	fmt.Println(token)
 	username, email, err := ParseJWT(token)
+	fmt.Println(username, email, err)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest) //400
 		w.Write([]byte(`{"code": 400, "msg": "Error parsing token"}`))
@@ -137,6 +139,7 @@ func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := QueryByEmail(email, false)
+	fmt.Println(user, err)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound) //400
 		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
