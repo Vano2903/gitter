@@ -152,6 +152,7 @@ func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println(DeleteUser(user.User, user.Pass, false))
 	statusCode, err := AddUser(username, email, user.Pass, user.Salt, true)
 	if err != nil {
 		w.WriteHeader(statusCode) //400 | 406
