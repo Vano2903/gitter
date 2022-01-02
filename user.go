@@ -103,11 +103,17 @@ func QueryUser(user, pass string) (User, error) {
 	return userFound[0], nil
 }
 
-func QueryByEmail(email string) (User, error) {
+func QueryByEmail(email string, inRegistered bool) (User, error) {
 	//create a query using email and password
 	query := bson.M{"email": email}
 	//check the db for the credentials using the query
-	cur, err := collectionUser.Find(ctxUser, query)
+	var cur *mongo.Cursor
+	var err error
+	if inRegistered {
+		cur, err = collectionUser.Find(ctxUser, query)
+	} else {
+		cur, err = collectionUserUnconfirmed.Find(ctxUser, query)
+	}
 	if err != nil {
 		return User{}, err
 	}
@@ -163,7 +169,7 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 		return 400, fmt.Errorf("User already exist: %s", err.Error())
 	}
 
-	if salt != "" {
+	if salt == "" {
 		//generating a new randomizer
 		var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 		//generating the user salt (random string of length 16)

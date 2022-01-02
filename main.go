@@ -136,12 +136,13 @@ func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := QueryByEmail(email)
+	user, err := QueryByEmail(email, false)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound) //400
 		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
 		return
 	}
+
 	if user.User != username {
 		w.WriteHeader(http.StatusBadRequest) //400
 		w.Write([]byte(`{"code": 400, "msg": "User doesnt match, maybe the jwt is invalid, try to register again"}`))
