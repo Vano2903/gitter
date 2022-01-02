@@ -25,7 +25,7 @@ var (
 
 func init() {
 	//read and unmarshal the yaml config file
-	dat, err := ioutil.ReadFile("configs/config.yaml")
+	dat, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
 		log.Fatalf("error reading the config file: %s", err)
 	}
