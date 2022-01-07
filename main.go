@@ -217,7 +217,15 @@ func GetReposHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(repos)
+	reposStruct := struct {
+		Code  int      `json:"code"`
+		Repos []string `json:"repos"`
+	}{
+		Code:  http.StatusOK,
+		Repos: repos,
+	}
+
+	json.NewEncoder(w).Encode(reposStruct)
 }
 
 //TODO validate the credentials of the user when operating with git
