@@ -297,7 +297,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	if err != nil {
 		return info, err
 	}
-	branches := strings.Split(string(out), "\n")
+	branches := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
 
 	for _, b := range branches {
 		var branch Branch
@@ -316,7 +316,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	if err != nil {
 		return info, err
 	}
-	commits := strings.Split(string(out), "\n")
+	commits := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
 	info.CommitsNum = len(commits)
 	for i, c := range commits {
 		var commit Commit
@@ -336,7 +336,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	if err != nil {
 		return info, err
 	}
-	files := strings.Split(string(out), "\n")
+	files := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
 	for _, f := range files {
 		var file Object
 		file.Name = strings.Split(f, "\t")[1]
