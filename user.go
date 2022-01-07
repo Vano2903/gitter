@@ -320,6 +320,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	info.CommitsNum = len(commits)
 	for i, c := range commits {
 		var commit Commit
+		fmt.Println(strings.Split(c, " "))
 		commit.Hash = strings.Split(c, " ")[0]
 		commit.Message = strings.Split(c, " ")[1]
 		info.Commits = append(info.Commits, commit)
