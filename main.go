@@ -228,6 +228,33 @@ func GetReposHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(reposStruct)
 }
 
+func GetRepoInfoHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var post Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error Unmarshalling JSON"}`))
+		return
+	}
+
+	user, err := QueryByEmail(post.Email, true)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound) //404
+		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+
+	repoInfo, err := user.GetRepoInfo(mux.Vars(r)["repo"])
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error getting the repository info"}`))
+		return
+	}
+
+
+	json.NewEncoder(w).Encode(repoInfo)
+}
+
 //TODO validate the credentials of the user when operating with git
 //TODO delete a user
 func main() {

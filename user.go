@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os/exec"
 	"reflect"
 	"strings"
 	"time"
@@ -32,6 +33,13 @@ type User struct {
 	Pass   string             `bson:"password, omitempty"  json:"password, omitempty"` //password
 	Salt   string             `bson:"salt, omitempty"  json:"-"`
 	PfpUrl string             `bson:"pfp_url, omitempty" json:"pfp_url, omitempty"` //url of the profile picture
+}
+
+type Info struct {
+	CommitsNum int      `json:"commits_num"`
+	Files      []string `json:"files"`
+	LastCommit string   `json:"last_commit"`
+	Branches   []string `json:"branches"`
 }
 
 //check if the structure has empty fields
@@ -255,11 +263,21 @@ func (u User) GetRepos() ([]string, error) {
 		return nil, err
 	}
 
-	var repos []string 
-	
+	var repos []string
 
 	for _, f := range files {
 		repos = append(repos, f.Name()[:len(f.Name())-4])
 	}
 	return repos, nil
+}
+
+func (u User) GetRepoInfo(repo string) (Info, error) {
+	cmd := exec.Command("git", "for-each-ref")
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err := cmd.Output()
+	if err != nil {
+		return Info{}, err
+	}
+	fmt.Println(string(out))
+	return Info{}, nil
 }

@@ -13,8 +13,9 @@ const (
 	Singoff             string = "/git/api/singoff"
 
 	//repo endpoints
-	GetRepos   string = "/git/api/{user}/repos"
-	GetRepo    string = "/git/api/{user}/{repo}/get"
-	AddRepo    string = "/git/api/{user}/add/{repo}"
-	DeleteRepo string = "/git/api/{user}/delete/{repo}"
+	GetRepos     string = "/git/api/{user}/repos"
+	GetRepoInfo string = "/git/api/{user}/{repo}/get"
+	GetRepoFile  string = "/git/api/{user}/{repo}/get/{file-hash}"
+	AddRepo      string = "/git/api/{user}/add/{repo}"
+	DeleteRepo   string = "/git/api/{user}/delete/{repo}"
 )
