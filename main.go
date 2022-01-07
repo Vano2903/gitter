@@ -251,7 +251,6 @@ func GetRepoInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	json.NewEncoder(w).Encode(repoInfo)
 }
 
@@ -277,6 +276,7 @@ func main() {
 	//repo operations handlers
 	r.HandleFunc(AddRepo, AddRepoHandler).Methods("POST")
 	r.HandleFunc(GetRepos, GetReposHandler).Methods("POST")
+	r.HandleFunc(GetRepoInfo, GetRepoInfoHandler).Methods("POST")
 
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))
