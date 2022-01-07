@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"reflect"
 	"strings"
@@ -246,4 +247,18 @@ func (u User) CreateRepo(repoName string) error {
 		return fmt.Errorf("error creating the repo: %s", err.Error())
 	}
 	return nil
+}
+
+func (u User) GetRepos() ([]string, error) {
+	files, err := ioutil.ReadDir(conf.Repos + u.User)
+	if err != nil {
+		return nil, err
+	}
+
+	var repos []string
+
+	for _, f := range files {
+		repos = append(repos, f.Name()[:len(f.Name())-4])
+	}
+	return repos, nil
 }

@@ -166,6 +166,7 @@ func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//add a repo and initialize it with git init --bare
 func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
 	repo := mux.Vars(r)["repo"] + ".git"
 	var post Post
@@ -192,7 +193,35 @@ func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"code": 201, "msg": "Repository created correctly"}`))
 }
 
+//read as a post the user credentials and returns all the user's repos
+func GetReposHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var post Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error Unmarshalling JSON"}`))
+		return
+	}
+
+	user, err := QueryByEmail(post.Email, true)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound) //404
+		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+
+	repos, err := user.GetRepos()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error getting the repositories"}`))
+		return
+	}
+
+	json.NewEncoder(w).Encode(repos)
+}
+
 //TODO validate the credentials of the user when operating with git
+//TODO delete a user
 func main() {
 	r := mux.NewRouter()
 
@@ -212,6 +241,7 @@ func main() {
 
 	//repo operations handlers
 	r.HandleFunc(AddRepo, AddRepoHandler).Methods("POST")
+	r.HandleFunc(GetRepos, GetReposHandler).Methods("POST")
 
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))
