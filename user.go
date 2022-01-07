@@ -35,11 +35,28 @@ type User struct {
 	PfpUrl string             `bson:"pfp_url, omitempty" json:"pfp_url, omitempty"` //url of the profile picture
 }
 
+type Commit struct {
+	Hash    string `json:"hash"`
+	Message string `json:"message"`
+}
+
+type Object struct {
+	Type string `json:"type"`
+	Hash string `json:"hash"`
+	Name string `json:"name"`
+}
+
+type Branch struct {
+	Name string `json: "name"`
+	Hash string `json: "hash"`
+	Type string `json: "type"`
+}
 type Info struct {
 	CommitsNum int      `json:"commits_num"`
-	Files      []string `json:"files"`
-	LastCommit string   `json:"last_commit"`
-	Branches   []string `json:"branches"`
+	Commits    []Commit `json:"commits"`
+	Files      []Object `json:"files"`
+	LastCommit Commit   `json:"last_commit"`
+	Branches   []Branch `json:"branches"`
 }
 
 //check if the structure has empty fields
@@ -272,13 +289,60 @@ func (u User) GetRepos() ([]string, error) {
 }
 
 func (u User) GetRepoInfo(repo string) (Info, error) {
+	var info Info
+	//get the branches
 	cmd := exec.Command("git", "for-each-ref")
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err := cmd.Output()
-	fmt.Println(string(out))
-	fmt.Println(cmd.Dir)
 	if err != nil {
-		return Info{}, err
+		return info, err
 	}
-	return Info{}, nil
+	branches := strings.Split(string(out), "\n")
+
+	for _, b := range branches {
+		var branch Branch
+		if strings.Contains(b, "refs/heads/") {
+			branch.Name = strings.Split(b, "refs/heads/")[1]
+			branch.Type = strings.Split(b, " ")[1]
+			branch.Hash = strings.Split(b, " ")[0]
+			info.Branches = append(info.Branches, branch)
+		}
+	}
+
+	//get all the commits, the number of them and the last commit
+	cmd = exec.Command("git", "log", "--oneline")
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err = cmd.Output()
+	if err != nil {
+		return info, err
+	}
+	commits := strings.Split(string(out), "\n")
+	info.CommitsNum = len(commits)
+	for i, c := range commits {
+		var commit Commit
+		commit.Hash = strings.Split(c, " ")[0]
+		commit.Message = strings.Split(c, " ")[1]
+		info.Commits = append(info.Commits, commit)
+		if i == 0 {
+			info.LastCommit = commit
+		}
+	}
+
+	//get all the files
+	cmd = exec.Command("git", "ls-tree", "-r", "HEAD")
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err = cmd.Output()
+	if err != nil {
+		return info, err
+	}
+	files := strings.Split(string(out), "\n")
+	for _, f := range files {
+		var file Object
+		file.Name = strings.Split(f, "\t")[1]
+		file.Hash = strings.Split(f, " ")[2]
+		file.Type = strings.Split(f, " ")[1]
+		info.Files = append(info.Files, file)
+	}
+
+	return info, nil
 }
