@@ -14,8 +14,6 @@ type Post struct {
 	Username string `json:"username, omitempty"` //username of the user
 	Email    string `json:"email, omitempty"`    //email of the user
 	Password string `json:"password, omitempty"` //password of the user
-	// Year     int    `json:"year, omitempty"`     //year for the commits
-	// Id       string `json:"id, omitempty"`       //id is the id of the game to delete
 }
 
 //handle git endpoint /info/refs
@@ -33,7 +31,7 @@ func GitHandlerPackage(w http.ResponseWriter, r *http.Request, pkg string) {
 	GitHandler.ServeHTTP(w, r)
 }
 
-//add a user to the database and create the user's repo
+//send email to confirm registration, add this used to the temporary database
 func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	var post Post
 	w.Header().Set("Content-Type", "application/json")
@@ -123,9 +121,9 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(statusCode) //201
 	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "added correctly, check your email to confirm your registration")))
-	// fmt.Println()
 }
 
+//confirm registration, add the user to the actual user's database and create his repository
 func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	token := r.URL.Query().Get("token")
@@ -161,9 +159,40 @@ func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(statusCode) //200
-	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "confirmed correctly, you can now login")))
+	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "confirmed correctly")))
 }
 
+func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
+	repo := mux.Vars(r)["repo"] + ".git"
+	var post Post
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error Unmarshalling JSON"}`))
+		return
+	}
+
+	user, err := QueryByEmail(post.Email, true)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound) //404
+		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+
+	if err := user.CreateRepo(repo); err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error creating the repository"}`))
+		return
+	}
+	w.Write([]byte(`{"code": 201, "msg": "Repository created correctly"}`))
+}
+
+//TODO validate the credentials of the user when operating with git
 func main() {
 	r := mux.NewRouter()
 
@@ -179,6 +208,10 @@ func main() {
 	//handle user operations
 	r.HandleFunc(Register, AddUserUnconfirmHandler).Methods("POST")
 	r.HandleFunc(ConfirmRegistration, ConfirmRegistrationHandler).Methods("GET")
+	r.HandleFunc(Singoff, DeleteUserHandler).Methods("POST")
+
+	//repo operations handlers
+	r.HandleFunc(AddRepo, AddRepoHandler).Methods("POST")
 
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))

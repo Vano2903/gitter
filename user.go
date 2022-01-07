@@ -240,3 +240,10 @@ func DeleteUser(user, pass string, isConfirmed bool) error {
 	_, err := collectionUserUnconfirmed.DeleteOne(ctxUser, bson.M{"user": user, "password": pass})
 	return err
 }
+
+func (u User) CreateRepo(repoName string) error {
+	if err := CreateNewDir(conf.Repos+u.User+"/"+repoName, true); err != nil {
+		return fmt.Errorf("error creating the repo: %s", err.Error())
+	}
+	return nil
+}
