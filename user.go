@@ -342,7 +342,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 		var file Object
 		file.Type = strings.Split(f, " ")[1]
 		file.Hash = strings.Split(f, " ")[2]
-		file.Name = strings.Join(strings.Split(f, " ")[3:], " ")
+		file.Name = strings.Join(strings.Split(f, "\t")[1:], " ")
 		info.Files = append(info.Files, file)
 	}
 
