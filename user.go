@@ -302,7 +302,9 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	for _, b := range branches {
 		var branch Branch
 		if strings.Contains(b, "refs/heads/") {
-			fmt.Println(strings.Split(b, " "))
+			for i, a := range strings.Split(b, " ") {
+				fmt.Println(i, a)
+			}
 			branch.Hash = strings.Split(b, " ")[0]
 			branch.Type = strings.Split(b, " ")[1]
 			branch.Name = strings.Replace(strings.Split(b, " ")[2], "refs/heads/", "", 1)
