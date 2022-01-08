@@ -297,7 +297,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err := cmd.Output()
 	fmt.Println(string(out))
-	fmt.Println(err.Error())
+	fmt.Println(err)
 	if err != nil {
 		return info, err
 	}
