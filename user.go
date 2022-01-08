@@ -340,12 +340,12 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	//get all the files
 	cmd = exec.Command("git", "ls-tree", "-r", "HEAD")
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
-	out, err = cmd.Output()
+	out, _ = cmd.Output()
 	fmt.Println("ls-tree:", string(out))
-	fmt.Println(err)
-	if err != nil {
-		return info, err
-	}
+	// fmt.Println(err)
+	// if err != nil {
+	// 	return info, err
+	// }
 	files := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
 	fmt.Println("files: ", branches, "len: ", len(branches))
 
