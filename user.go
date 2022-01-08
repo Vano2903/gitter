@@ -296,12 +296,13 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	cmd := exec.Command("git", "for-each-ref")
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err := cmd.Output()
-	fmt.Println(string(out))
+	fmt.Println("for-each:", string(out))
 	fmt.Println(err)
 	if err != nil {
 		return info, err
 	}
 	branches := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
+	fmt.Println("branches: ", branches, "len: ", len(branches))
 	for _, b := range branches {
 		var branch Branch
 		if strings.Contains(b, "refs/heads/") {
@@ -316,10 +317,14 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	cmd = exec.Command("git", "log", `--pretty=format:%h %ct %s`)
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err = cmd.Output()
+	fmt.Println("log:", string(out))
+	fmt.Println(err)
 	if err != nil {
 		return info, err
 	}
 	commits := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
+	fmt.Println("commits: ", branches, "len: ", len(branches))
+
 	info.CommitsNum = len(commits)
 	for i, c := range commits {
 		var commit Commit
@@ -336,10 +341,14 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	cmd = exec.Command("git", "ls-tree", "-r", "HEAD")
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err = cmd.Output()
+	fmt.Println("ls-tree:", string(out))
+	fmt.Println(err)
 	if err != nil {
 		return info, err
 	}
 	files := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
+	fmt.Println("files: ", branches, "len: ", len(branches))
+
 	for _, f := range files {
 		var file Object
 		file.Type = strings.Split(f, " ")[1]
