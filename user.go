@@ -302,18 +302,15 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	for _, b := range branches {
 		var branch Branch
 		if strings.Contains(b, "refs/heads/") {
-			for i, a := range strings.Split(b, " ") {
-				fmt.Println(i, a)
-			}
 			branch.Hash = strings.Split(b, " ")[0]
-			branch.Type = strings.Split(b, " ")[1]
+			branch.Type = strings.Split(b, "\t")[0]
 			branch.Name = strings.Replace(strings.Split(b, "\t")[1], "refs/heads/", "", 1)
 			info.Branches = append(info.Branches, branch)
 		}
 	}
 
 	//get all the commits, the number of them and the last commit
-	cmd = exec.Command("git", "log", `--pretty="format:%h %%ct %%s"`)
+	cmd = exec.Command("git", "log", `--pretty="format:%h %ct %s"`)
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err = cmd.Output()
 	if err != nil {
