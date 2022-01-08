@@ -52,6 +52,7 @@ type Branch struct {
 	Hash string `json: "hash"`
 	Type string `json: "type"`
 }
+
 type Info struct {
 	CommitsNum int      `json:"commits_num"`
 	Commits    []Commit `json:"commits"`
@@ -303,7 +304,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 		var branch Branch
 		if strings.Contains(b, "refs/heads/") {
 			branch.Hash = strings.Split(b, " ")[0]
-			branch.Type = strings.Split(b, "\t")[0]
+			branch.Type = strings.Split(strings.Split(b, " ")[1], "\t")[0]
 			branch.Name = strings.Replace(strings.Split(b, "\t")[1], "refs/heads/", "", 1)
 			info.Branches = append(info.Branches, branch)
 		}
@@ -320,7 +321,6 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	info.CommitsNum = len(commits)
 	for i, c := range commits {
 		var commit Commit
-		fmt.Println(strings.Split(c, " "))
 		commit.Hash = strings.Split(c, " ")[0]
 		commit.Date = strings.Split(c, " ")[1]
 		commit.Message = strings.Join(strings.Split(c, " ")[2:], " ")
