@@ -342,10 +342,13 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 		var file Object
 		file.Type = strings.Split(f, " ")[1]
 		file.Hash = strings.Split(strings.Split(f, " ")[2], "\t")[0]
-		// file.Name = strings.Join(strings.Split(f, "\t")[1:], " ")
 		file.Name = strings.Split(strings.Split(f, " ")[2], "\t")[1]
 		info.Files = append(info.Files, file)
 	}
 
 	return info, nil
 }
+
+// func (u User) GetInfoFromHash(repo string, hash string) error{
+	
+// }

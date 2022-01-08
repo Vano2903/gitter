@@ -187,7 +187,7 @@ func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := user.CreateRepo(repo); err != nil {
 		w.WriteHeader(http.StatusInternalServerError) //500
-		w.Write([]byte(`{"code": 500, "msg": "Error creating the repository"}`))
+		w.Write([]byte(`{"code": 500, "msg": "Error creating the repository: ` + err.Error() + `"}`))
 		return
 	}
 	w.Write([]byte(`{"code": 201, "msg": "Repository created correctly"}`))
@@ -213,7 +213,7 @@ func GetReposHandler(w http.ResponseWriter, r *http.Request) {
 	repos, err := user.GetRepos()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError) //500
-		w.Write([]byte(`{"code": 500, "msg": "Error getting the repositories"}`))
+		w.Write([]byte(`{"code": 500, "msg": "Error getting the repositories: ` + err.Error() + `"}`))
 		return
 	}
 
@@ -247,7 +247,7 @@ func GetRepoInfoHandler(w http.ResponseWriter, r *http.Request) {
 	repoInfo, err := user.GetRepoInfo(mux.Vars(r)["repo"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError) //500
-		w.Write([]byte(`{"code": 500, "msg": "Error getting the repository info"}`))
+		w.Write([]byte(`{"code": 500, "msg": "Error getting the repository info: ` + err.Error() + `"}`))
 		return
 	}
 
