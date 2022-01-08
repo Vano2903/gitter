@@ -38,6 +38,7 @@ type User struct {
 type Commit struct {
 	Hash    string `json:"hash"`
 	Message string `json:"message"`
+	Date    string `json:"date"`
 }
 
 type Object struct {
@@ -302,15 +303,15 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	for _, b := range branches {
 		var branch Branch
 		if strings.Contains(b, "refs/heads/") {
-			branch.Name = strings.Split(b, "refs/heads/")[1]
-			branch.Type = strings.Split(b, " ")[1]
 			branch.Hash = strings.Split(b, " ")[0]
+			branch.Type = strings.Split(b, " ")[1]
+			branch.Name = strings.Replace(strings.Split(b, " ")[2], "refs/heads/", "", 1)
 			info.Branches = append(info.Branches, branch)
 		}
 	}
 
 	//get all the commits, the number of them and the last commit
-	cmd = exec.Command("git", "log", "--oneline")
+	cmd = exec.Command("git", "log", `--pretty="format:%h %%ct %%s"`)
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err = cmd.Output()
 	if err != nil {
@@ -322,7 +323,8 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 		var commit Commit
 		fmt.Println(strings.Split(c, " "))
 		commit.Hash = strings.Split(c, " ")[0]
-		commit.Message = strings.Split(c, " ")[1]
+		commit.Date = strings.Split(c, " ")[1]
+		commit.Message = strings.Join(strings.Split(c, " ")[2:], " ")
 		info.Commits = append(info.Commits, commit)
 		if i == 0 {
 			info.LastCommit = commit
@@ -339,9 +341,9 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	files := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
 	for _, f := range files {
 		var file Object
-		file.Name = strings.Split(f, "\t")[1]
-		file.Hash = strings.Split(f, " ")[2]
 		file.Type = strings.Split(f, " ")[1]
+		file.Hash = strings.Split(f, " ")[2]
+		file.Name = strings.Join(strings.Split(f, " ")[3:], " ")
 		info.Files = append(info.Files, file)
 	}
 
