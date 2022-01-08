@@ -296,6 +296,8 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	cmd := exec.Command("git", "for-each-ref")
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err := cmd.Output()
+	fmt.Println(string(out))
+	fmt.Println(err.Error())
 	if err != nil {
 		return info, err
 	}
@@ -350,5 +352,5 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 }
 
 // func (u User) GetInfoFromHash(repo string, hash string) error{
-	
+
 // }
