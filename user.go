@@ -316,12 +316,12 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	//get all the commits, the number of them and the last commit
 	cmd = exec.Command("git", "log", `--pretty=format:%h %ct %s`)
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
-	out, err = cmd.Output()
+	out, _ = cmd.Output()
 	fmt.Println("log:", string(out))
-	fmt.Println(err)
-	if err != nil {
-		return info, err
-	}
+	// fmt.Println(err)
+	// if err != nil {
+	// 	return info, err
+	// }
 	commits := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
 	fmt.Println("commits: ", branches, "len: ", len(branches))
 
