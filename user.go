@@ -307,7 +307,7 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 			}
 			branch.Hash = strings.Split(b, " ")[0]
 			branch.Type = strings.Split(b, " ")[1]
-			branch.Name = strings.Replace(strings.Split(b, " ")[2], "refs/heads/", "", 1)
+			branch.Name = strings.Replace(strings.Split(b, "\t")[1], "refs/heads/", "", 1)
 			info.Branches = append(info.Branches, branch)
 		}
 	}
