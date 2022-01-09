@@ -162,13 +162,44 @@ func ConfirmRegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, "confirmed correctly")))
 }
 
-func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+//Read as post the email and password and return the user's information
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var post Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error Unmarshalling JSON"}`))
+		return
+	}
 
+	user, err := QueryByEmail(post.Email, true)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound) //400
+		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+
+	if user.Pass != post.Password {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Password is wrong"}`))
+		return
+	}
+
+	jsonUser, err := json.Marshal(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error Marshalling JSON"}`))
+		return
+	}
+
+	w.Write(jsonUser)
+}
+
+func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 //add a repo and initialize it with git init --bare
 func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
-	repo := mux.Vars(r)["repo"] + ".git"
 	var post Post
 	w.Header().Set("Content-Type", "application/json")
 
@@ -182,6 +213,20 @@ func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound) //404
 		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+
+	repo := mux.Vars(r)["repo"]
+	exist, err := user.ExistDir(repo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error checking the repository: ` + err.Error() + `"}`))
+		return
+	}
+
+	if !exist {
+		w.WriteHeader(http.StatusConflict) //409
+		w.Write([]byte(`{"code": 409, "msg": "Repository already exists"}`))
 		return
 	}
 
@@ -244,7 +289,20 @@ func GetRepoInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repoInfo, err := user.GetRepoInfo(mux.Vars(r)["repo"])
+	repo := mux.Vars(r)["repo"]
+	exist, err := user.ExistDir(repo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error checking the repository: ` + err.Error() + `"}`))
+		return
+	}
+	if !exist {
+		w.WriteHeader(http.StatusNotFound) //404
+		w.Write([]byte(`{"code": 404, "msg": "Repository not found"}`))
+		return
+	}
+
+	repoInfo, err := user.GetRepoInfo(repo)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError) //500
 		w.Write([]byte(`{"code": 500, "msg": "Error getting the repository info: ` + err.Error() + `"}`))
@@ -252,6 +310,71 @@ func GetRepoInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(repoInfo)
+}
+
+func HashHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var post Post
+	if err := json.NewDecoder(r.Body).Decode(&post); err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error Unmarshalling JSON"}`))
+		return
+	}
+
+	user, err := QueryByEmail(post.Email, true)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound) //404
+		w.Write([]byte(`{"code": 404, "msg": "User not found"}`))
+		return
+	}
+
+	repo := mux.Vars(r)["repo"]
+	exist, err := user.ExistDir(repo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte(`{"code": 500, "msg": "Error checking the repository: ` + err.Error() + `"}`))
+		return
+	}
+	if !exist {
+		w.WriteHeader(http.StatusNotFound) //404
+		w.Write([]byte(`{"code": 404, "msg": "Repository not found"}`))
+		return
+	}
+
+	fileHash := mux.Vars(r)["hash"]
+	hashType, err := user.GetHashType(repo, fileHash)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte(`{"code": 400, "msg": "Error finding the hash: ` + err.Error() + `, check if the hash is correct"}`))
+		return
+	}
+
+	switch hashType {
+	case "commit":
+		commitHash, err := user.GetCommitInfo(repo, fileHash)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError) //500
+			w.Write([]byte(`{"code": 500, "msg": "Error getting the commit hash: ` + err.Error() + `"}`))
+			return
+		}
+		json.NewEncoder(w).Encode(commitHash)
+	case "blob":
+		blobHash, err := user.GetBlobInfo(repo, fileHash)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError) //500
+			w.Write([]byte(`{"code": 500, "msg": "Error getting the blob hash: ` + err.Error() + `"}`))
+			return
+		}
+		json.NewEncoder(w).Encode(blobHash)
+	case "tree":
+		treeHash, err := user.GetTreeInfo(repo, fileHash)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError) //500
+			w.Write([]byte(`{"code": 500, "msg": "Error getting the tree hash: ` + err.Error() + `"}`))
+			return
+		}
+		json.NewEncoder(w).Encode(treeHash)
+	}
 }
 
 //TODO validate the credentials of the user when operating with git
@@ -269,6 +392,7 @@ func main() {
 	})
 
 	//handle user operations
+	r.HandleFunc(Login, LoginHandler).Methods("POST")
 	r.HandleFunc(Register, AddUserUnconfirmHandler).Methods("POST")
 	r.HandleFunc(ConfirmRegistration, ConfirmRegistrationHandler).Methods("GET")
 	r.HandleFunc(Singoff, DeleteUserHandler).Methods("POST")

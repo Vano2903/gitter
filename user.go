@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"os/exec"
 	"reflect"
 	"strings"
@@ -36,9 +37,10 @@ type User struct {
 }
 
 type Commit struct {
-	Hash    string `json:"hash"`
-	Message string `json:"message"`
-	Date    string `json:"date"`
+	Tree    string `json:"tree, omitempty"`
+	Hash    string `json:"hash, omitempty"`
+	Message string `json:"message, omitempty"`
+	Date    string `json:"date, omitempty"`
 }
 
 type Object struct {
@@ -269,13 +271,15 @@ func DeleteUser(user, pass string, isConfirmed bool) error {
 	return err
 }
 
+//create a new repo and run git init --bare
 func (u User) CreateRepo(repoName string) error {
-	if err := CreateNewDir(conf.Repos+u.User+"/"+repoName, true); err != nil {
+	if err := CreateNewDir(conf.Repos+u.User+"/"+repoName+".git", true); err != nil {
 		return fmt.Errorf("error creating the repo: %s", err.Error())
 	}
 	return nil
 }
 
+//return a list with all the repos of a user
 func (u User) GetRepos() ([]string, error) {
 	files, err := ioutil.ReadDir(conf.Repos + u.User)
 	if err != nil {
@@ -290,6 +294,7 @@ func (u User) GetRepos() ([]string, error) {
 	return repos, nil
 }
 
+//get the info of a repo from the filesystem
 func (u User) GetRepoInfo(repo string) (Info, error) {
 	var info Info
 	//get the branches
@@ -360,6 +365,72 @@ func (u User) GetRepoInfo(repo string) (Info, error) {
 	return info, nil
 }
 
-// func (u User) GetInfoFromHash(repo string, hash string) error{
+//get the type of hash (commit/tree/blob)
+func (u User) GetHashType(repo string, hash string) (string, error) {
+	cmd := exec.Command("git", "cat-file", "-t", hash)
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.Split(string(out), "\n")[0], nil
+}
 
-// }
+//return a commit with commit hash empty but the tree hash
+func (u User) GetCommitInfo(repo string, hash string) (Commit, error) {
+	var commit Commit
+	//get the commit message
+	cmd := exec.Command("git", "show", hash, "--pretty=format:%t %ct %s", "--no-patch")
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err := cmd.Output()
+	if err != nil {
+		return commit, err
+	}
+	commit.Tree = strings.Split(string(out), " ")[0]
+	commit.Date = strings.Split(string(out), " ")[1]
+	commit.Message = strings.Join(strings.Split(string(out), " ")[2:], " ")
+
+	return commit, nil
+}
+
+//return a list of object (files) with the tree hash
+func (u User) GetTreeInfo(repo string, hash string) ([]Object, error){
+	var objects []Object
+	cmd := exec.Command("git", "ls-tree", "-r", hash)
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err := cmd.Output()
+	if err != nil {
+		return objects, err
+	}
+	files := strings.Split(string(out), "\n")[:len(strings.Split(string(out), "\n"))-1]
+	for _, f := range files {
+		var file Object
+		file.Type = strings.Split(f, " ")[1]
+		file.Hash = strings.Split(strings.Split(f, " ")[2], "\t")[0]
+		file.Name = strings.Split(strings.Split(f, " ")[2], "\t")[1]
+		objects = append(objects, file)
+	}
+	return objects, nil
+}
+
+func (u User) GetBlobInfo(repo string, hash string) (string, error){
+	cmd := exec.Command("git", "cat-file", "-p", hash)
+	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
+//check if a directory exists
+func (u User) ExistDir(repo string) (bool, error) {
+	_, err := os.Stat(conf.Repos + u.User + "/" + repo + ".git")
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
