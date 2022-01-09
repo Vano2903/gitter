@@ -379,6 +379,10 @@ func HashHandler(w http.ResponseWriter, r *http.Request) {
 
 //TODO validate the credentials of the user when operating with git
 //TODO delete a user
+
+//!
+//TODO con get repo ritorna anche il tree non solo l'hash
+//!
 func main() {
 	r := mux.NewRouter()
 
@@ -401,6 +405,7 @@ func main() {
 	r.HandleFunc(AddRepo, AddRepoHandler).Methods("POST")
 	r.HandleFunc(GetRepos, GetReposHandler).Methods("POST")
 	r.HandleFunc(GetRepoInfo, GetRepoInfoHandler).Methods("POST")
+	r.HandleFunc(GetRepoHashInfo, HashHandler).Methods("POST")
 
 	fmt.Println(conf.Port)
 	log.Fatal(http.ListenAndServe(":"+conf.Port, r))
