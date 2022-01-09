@@ -44,14 +44,7 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statusCode, err := AddUser(post.Username, post.Email, post.Password, "", false)
-	if err != nil {
-		w.WriteHeader(statusCode) //400 | 406
-		w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, err.Error())))
-		return
-	}
-
-	_, err = QueryByEmail(post.Email, true)
+	_, err := QueryByEmail(post.Email, true)
 	if err == nil {
 		w.WriteHeader(http.StatusConflict) //409
 		w.Write([]byte(`{"code": 409, "msg": "User already exists"}`))
@@ -76,6 +69,13 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		w.WriteHeader(http.StatusConflict) //409
 		w.Write([]byte(`{"code": 409, "msg": "User is pending to be confirmed"}`))
+		return
+	}
+
+	statusCode, err := AddUser(post.Username, post.Email, post.Password, "", false)
+	if err != nil {
+		w.WriteHeader(statusCode) //400 | 406
+		w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, err.Error())))
 		return
 	}
 
