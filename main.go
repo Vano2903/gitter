@@ -187,6 +187,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`{"code": 400, "msg": "Password is wrong"}`))
 		return
 	}
+	//
 
 	jsonUser, err := json.Marshal(user)
 	if err != nil {
