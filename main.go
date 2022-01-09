@@ -387,6 +387,7 @@ func HashHandler(w http.ResponseWriter, r *http.Request) {
 //TODO delete a user
 
 //!
+//todo check if the user doesnt already exist, not only the email when registrating a new user
 //TODO con get repo ritorna anche il tree non solo l'hash
 //!
 func main() {

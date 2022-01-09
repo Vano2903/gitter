@@ -225,6 +225,9 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 	pfpUrl := "https://avatars.dicebear.com/api/identicon/" + user + ".svg"
 	//adding user to database
 	//This struct is needed cause user has ID field
+	if !confirmed {
+		pass = fmt.Sprintf("%x", sha256.Sum256([]byte(pass+":"+salt)))
+	}
 	toInsert := struct {
 		User   string `bson:"user, omitempty"      json: "user, omitempty"`
 		Email  string `bson:"email, omitempty"  json:"email, omitempty"`
@@ -235,7 +238,7 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 		user,
 		email,
 		salt,
-		fmt.Sprintf("%x", sha256.Sum256([]byte(pass+":"+salt))),
+		pass,
 		pfpUrl,
 	}
 
