@@ -235,7 +235,7 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 		user,
 		email,
 		salt,
-		fmt.Sprintf("%x", sha256.Sum256([]byte(pass+":"+salt))),
+		fmt.Sprintf("%s", sha256.Sum256([]byte(pass+":"+salt))),
 		pfpUrl,
 	}
 
@@ -394,7 +394,7 @@ func (u User) GetCommitInfo(repo string, hash string) (Commit, error) {
 }
 
 //return a list of object (files) with the tree hash
-func (u User) GetTreeInfo(repo string, hash string) ([]Object, error){
+func (u User) GetTreeInfo(repo string, hash string) ([]Object, error) {
 	var objects []Object
 	cmd := exec.Command("git", "ls-tree", "-r", hash)
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
@@ -413,7 +413,7 @@ func (u User) GetTreeInfo(repo string, hash string) ([]Object, error){
 	return objects, nil
 }
 
-func (u User) GetBlobInfo(repo string, hash string) (string, error){
+func (u User) GetBlobInfo(repo string, hash string) (string, error) {
 	cmd := exec.Command("git", "cat-file", "-p", hash)
 	cmd.Dir = conf.Repos + u.User + "/" + repo + ".git"
 	out, err := cmd.Output()

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -179,7 +180,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Pass != post.Password {
+	hash := fmt.Sprintf("%s", sha256.Sum256([]byte(post.Password+":"+user.Salt)))
+
+	if hash != user.Pass {
 		w.WriteHeader(http.StatusBadRequest) //400
 		w.Write([]byte(`{"code": 400, "msg": "Password is wrong"}`))
 		return
