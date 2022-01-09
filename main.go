@@ -224,7 +224,7 @@ func AddRepoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !exist {
+	if exist {
 		w.WriteHeader(http.StatusConflict) //409
 		w.Write([]byte(`{"code": 409, "msg": "Repository already exists"}`))
 		return
