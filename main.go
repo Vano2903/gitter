@@ -33,6 +33,7 @@ func GitHandlerPackage(w http.ResponseWriter, r *http.Request, pkg string) {
 }
 
 //send email to confirm registration, add this used to the temporary database
+//! SHOULD OPTIMIZE THIS FUNCTION A LOT, TOO MANY REQUEST TO DB
 func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	var post Post
 	w.Header().Set("Content-Type", "application/json")
@@ -47,6 +48,34 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(statusCode) //400 | 406
 		w.Write([]byte(fmt.Sprintf(`{"code": %d, "msg": "%s"}`, statusCode, err.Error())))
+		return
+	}
+
+	_, err = QueryByEmail(post.Email, true)
+	if err == nil {
+		w.WriteHeader(http.StatusConflict) //409
+		w.Write([]byte(`{"code": 409, "msg": "User already exists"}`))
+		return
+	}
+
+	_, err = QueryByEmail(post.Email, false)
+	if err == nil {
+		w.WriteHeader(http.StatusConflict) //409
+		w.Write([]byte(`{"code": 409, "msg": "User is pending to be confirmed"}`))
+		return
+	}
+
+	_, err = QueryByUsername(post.Username, true)
+	if err == nil {
+		w.WriteHeader(http.StatusConflict) //409
+		w.Write([]byte(`{"code": 409, "msg": "User is pending to be confirmed"}`))
+		return
+	}
+
+	_, err = QueryByUsername(post.Username, false)
+	if err == nil {
+		w.WriteHeader(http.StatusConflict) //409
+		w.Write([]byte(`{"code": 409, "msg": "User is pending to be confirmed"}`))
 		return
 	}
 

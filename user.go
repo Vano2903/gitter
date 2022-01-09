@@ -167,6 +167,34 @@ func QueryByEmail(email string, inRegistered bool) (User, error) {
 	return userFound[0], nil
 }
 
+func QueryByUsername(username string, inRegistered bool) (User, error) {
+	//create a query using username and password
+	query := bson.M{"user": username}
+	//check the db for the credentials using the query
+	var cur *mongo.Cursor
+	var err error
+	if inRegistered {
+		cur, err = collectionUser.Find(ctxUser, query)
+	} else {
+		cur, err = collectionUserUnconfirmed.Find(ctxUser, query)
+	}
+	if err != nil {
+		return User{}, err
+	}
+	defer cur.Close(ctxUser)
+	var userFound []User
+
+	//convert cur in []User
+	if err = cur.All(context.TODO(), &userFound); err != nil {
+		return User{}, err
+	}
+	if len(userFound) == 0 {
+		return User{}, errors.New("no user found as " + username)
+	}
+	//return the first user found (since using username and password will only return a slice of 1)
+	return userFound[0], nil
+}
+
 //check that the username, email and password are not empty
 //check if the email is valid
 //check if the username has invalid characters (since it will be used as the name of the user's repo)
