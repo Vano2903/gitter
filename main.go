@@ -180,7 +180,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hash := fmt.Sprintf("%s", sha256.Sum256([]byte(post.Password+":"+user.Salt)))
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(post.Password+":"+user.Salt)))
 
 	if hash != user.Pass {
 		w.WriteHeader(http.StatusBadRequest) //400

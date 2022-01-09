@@ -235,7 +235,7 @@ func AddUser(user, email, pass, salt string, confirmed bool) (int, error) {
 		user,
 		email,
 		salt,
-		fmt.Sprintf("%s", sha256.Sum256([]byte(pass+":"+salt))),
+		fmt.Sprintf("%x", sha256.Sum256([]byte(pass+":"+salt))),
 		pfpUrl,
 	}
 
