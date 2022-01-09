@@ -359,6 +359,7 @@ func HashHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		json.NewEncoder(w).Encode(commitHash)
 	case "blob":
+		w.Header().Set("Content-Type", "text/plain")
 		blobHash, err := user.GetBlobInfo(repo, fileHash)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError) //500
