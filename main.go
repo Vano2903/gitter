@@ -366,7 +366,8 @@ func HashHandler(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"code": 500, "msg": "Error getting the blob hash: ` + err.Error() + `"}`))
 			return
 		}
-		json.NewEncoder(w).Encode(blobHash)
+		w.Write([]byte(blobHash))
+		// json.NewEncoder(w).Encode(blobHash)
 	case "tree":
 		treeHash, err := user.GetTreeInfo(repo, fileHash)
 		if err != nil {
