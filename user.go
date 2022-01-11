@@ -207,7 +207,7 @@ func CheckUserCreationInfo(user, emailUser, pass string) error {
 		return errors.New("email is not valid")
 	}
 	if len(user) < 4 || len(user) > 20 {
-		return errors.New("username must be longer than 4 characters")
+		return errors.New("username must be between 4 and 20 characters")
 	}
 	if strings.Contains(user, "/") {
 		return errors.New("username can't contain '/' character")
