@@ -140,7 +140,7 @@ func AddUserUnconfirmHandler(w http.ResponseWriter, r *http.Request) {
 	</head>
 	<div>
 		<h1>Hi, we are almost done, confirm your registration by clicking the button below</h1>`
-	emailBody += fmt.Sprintf(`<a href='http://192.168.1.9:8080/git/api/confirm?token=%s' 
+	emailBody += fmt.Sprintf(`<a href='http://asus_server_vano.dd-dns.de:8080/git/api/confirm?token=%s' 
 	id='submit'>Confirm your registration</a></div>`, jwt)
 	fmt.Println(jwt)
 	err = email.SendEmail(conf.Email, conf.EmailPassword, post.Email, "Confirm your registration to gitter", emailBody)
