@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/Vano2903/gitter/internal/email"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -443,6 +444,10 @@ func main() {
 	r.HandleFunc(GetRepoInfo, GetRepoInfoHandler).Methods("POST")
 	r.HandleFunc(GetRepoHashInfo, HashHandler).Methods("POST")
 
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "POST"})
+
 	fmt.Println(conf.Port)
-	log.Fatal(http.ListenAndServe(":"+conf.Port, r))
+	log.Fatal(http.ListenAndServe(":"+conf.Port, handlers.CORS(originsOk, headersOk, methodsOk)(r)))
 }
